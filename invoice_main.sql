@@ -1,7 +1,7 @@
 WITH SETTING AS
     (
-        select 62290320 as SUBS_ID
-             , DATE '2020-06-01'                                       as TIME_START
+        select 62290320                                                as SUBS_ID
+             , DATE '2020-06-05'                                       as TIME_START
              , TO_DATE('2021-06-25 11:40:00', 'YYYY-MM-DD HH24:MI:SS') as TIME_STOP
              , 1                                                       as VIEW_DATES_INVOICE
              , 1                                                       as VIEW_PAYMENT
@@ -32,6 +32,26 @@ WITH SETTING AS
                    AND NOT REGEXP_LIKE(VERSION, '[A-Za-z]')
                  GROUP BY TRUNC(INSTALL_DATE)
              ) ON D_A_T_E = INSTALL_DATE
+    )
+
+   , TT AS
+    (
+        SELECT '40_MESSAGE_SENDED'                                                           TNAME
+             , T1.CRE_USER_ID || ' ' || T5.LOGIN                                             CRE_USER_ID
+             , T1.START_DATE                                                                 CRE_DATE
+             , T1.DELIVERED                                                                  END_DATE
+             , T1.MSG_TYPE_ID || ' ' || T2.MSG_TYPE_NAME || ' ' || T1.PARAM1                 COMMENT_1
+             , T1.TRPL_ID || ' ' || T3.TRPL_NAME || ' ' || T1.SERV_ID || ' ' || T4.SERV_NAME TRPL_SERV
+             , T1.MESSAGE_TEXT                                                               COMMENT_2
+        FROM MESSAGE_SENDED T1
+                 LEFT JOIN MESSAGE_TYPE T2 ON T1.MSG_TYPE_ID = T2.MSG_TYPE_ID
+                 LEFT JOIN TARIFF_PLAN T3 ON T1.TRPL_ID = T3.TRPL_ID
+                 LEFT JOIN SERVICE T4 ON T1.SERV_ID = T4.SERV_ID
+                 LEFT JOIN INV_USER T5 ON T1.CRE_USER_ID = T5.USER_ID
+        WHERE 3 = 3
+          AND T1.SUBS_ID = (SELECT SUBS_ID FROM SETTING)
+          AND T1.START_DATE > (select TIME_START from SETTING)
+          AND T1.START_DATE < (select TIME_STOP from SETTING)
     )
 
    , X101 AS
@@ -69,11 +89,11 @@ WITH SETTING AS
              , C.CRE_USER_ID || ' ' || T5.LOGIN                                            CRE_USER_ID
              , TP.TRPL_ID || ' ' || TP.TRPL_NAME || ' ' || S.SERV_ID || ' ' || S.SERV_NAME TRPL_SERV
              , CT.CHARGE_TYPE
-             , C.CHARGE_DATE
+             , C.CHARGE_DATE                                                               CRE_DATE
              , ROUND(C.SUMM_$, 2)                                                          CHARGE_VALUE
-             , C.CRE_DATE
+             , C.CRE_DATE                                                                  CRE_DATE_INI
              , C.START_CHRG_INTERVAL
-             , C.END_CHRG_INTERVAL
+             , C.END_CHRG_INTERVAL                                                         END_DATE
              , C.START_CHRG_INTERVAL || ' ' || C.END_CHRG_INTERVAL                         COMMENT_2
              , CT.CHARGE_TYPE || ' ' || C.CRE_DATE                                         COMMENT_1
         FROM CHARGE C
@@ -97,8 +117,8 @@ WITH SETTING AS
              , C.CHARGE_DATE
              , ROUND(C.SUMM_$, 2)                  CHARGE_VALUE
              , C.CRE_DATE
-             , C.START_TIME_INTERVAL
-             , C.END_TIME_INTERVAL
+             , C.START_TIME_INTERVAL               ORDER_TIME
+             , C.END_TIME_INTERVAL                 END_DATE
              , 'Заказ на списание ' || (CASE WHEN C.SUMM_$ = 0 THEN NULL ELSE C.SUMM_$ END) || C.START_TIME_INTERVAL ||
                ' - ' || C.END_TIME_INTERVAL        COMMENT_2
              , CT.CHARGE_TYPE || ' ' || C.CRE_DATE COMMENT_1
@@ -115,29 +135,10 @@ WITH SETTING AS
           AND C.CHTYPE_ID <> -2
     )
 
-   , TT AS
-    (
-        SELECT '40_MESSAGE_SENDED'                                                           TNAME
-             , T1.CRE_USER_ID || ' ' || T5.LOGIN                                             CRE_USER_ID
-             , T1.START_DATE
-             , T1.DELIVERED
-             , T1.MSG_TYPE_ID || ' ' || T2.MSG_TYPE_NAME || ' ' || T1.PARAM1                 COMMENT_1
-             , T1.TRPL_ID || ' ' || T3.TRPL_NAME || ' ' || T1.SERV_ID || ' ' || T4.SERV_NAME TRPL_SERV
-             , T1.MESSAGE_TEXT                                                               COMMENT_2
-        FROM MESSAGE_SENDED T1
-                 LEFT JOIN MESSAGE_TYPE T2 ON T1.MSG_TYPE_ID = T2.MSG_TYPE_ID
-                 LEFT JOIN TARIFF_PLAN T3 ON T1.TRPL_ID = T3.TRPL_ID
-                 LEFT JOIN SERVICE T4 ON T1.SERV_ID = T4.SERV_ID
-                 LEFT JOIN INV_USER T5 ON T1.CRE_USER_ID = T5.USER_ID
-        WHERE 3 = 3
-          AND T1.SUBS_ID = (SELECT SUBS_ID FROM SETTING)
-          AND T1.START_DATE > (select TIME_START from SETTING)
-          AND T1.START_DATE < (select TIME_STOP from SETTING)
-    )
    , X106 as
     (
         SELECT '50_SERV_ORDER'                                                                            TNAME
-             , lpad(' ', 3 * level) || SERV_ID || ' ' || SERV_NAME || ', ' || SACT_ID || ' ' || SACT_NAME SERV_NAME
+             , lpad(' ', 3 * level) || SERV_ID || ' ' || SERV_NAME || ', ' || SACT_ID || ' ' || SACT_NAME TRPL_SERV
              , PARENT_SORD_ID
              , SORD_ID
              , CSC_ID
@@ -178,7 +179,7 @@ WITH SETTING AS
 
              , SB.CRE_USER_ID || ' ' || T5.LOGIN                 CRE_USER_ID
              , SB.CRE_DATE
-             , SB.TARGET_DATE
+             , SB.TARGET_DATE                                    ORDER_TIME
              , 'CHARGE_ORDER=' || SB.CHARGE_ORDER
             || ', ' || 'SWITCHOFF_BASE_SERV=' || SB.SWITCHOFF_BASE_SERV
             || ', ' || 'CHECK_SWITCHON=' || SB.CHECK_SWITCHON
@@ -214,13 +215,12 @@ WITH SETTING AS
              , ETIME                                                                           END_DATE
              , CRE_DATE
 
-            ,  decode(ACTIVATION_DATE, null, null, ACTIVATION_DATE,
-                      'AD=' || TO_CHAR(ACTIVATION_DATE, 'YYYY.MM.DD HH24:MI')||'; ', ACTIVATION_DATE)
+             , decode(ACTIVATION_DATE, null, null, ACTIVATION_DATE,
+                      'AD=' || TO_CHAR(ACTIVATION_DATE, 'YYYY.MM.DD HH24:MI') || '; ', ACTIVATION_DATE)
             || decode(LAST_ACTIVATION_DATE, null, null, LAST_ACTIVATION_DATE,
-                      'LAD=' || TO_CHAR(LAST_ACTIVATION_DATE, 'YYYY.MM.DD HH24:MI')||'; ', LAST_ACTIVATION_DATE)
-
+                      'LAD=' || TO_CHAR(LAST_ACTIVATION_DATE, 'YYYY.MM.DD HH24:MI') || '; ', LAST_ACTIVATION_DATE)
             || decode(LAST_CONNECTION_DATE, null, null, LAST_CONNECTION_DATE,
-                      'LCD=' || TO_CHAR(LAST_CONNECTION_DATE, 'YYYY.MM.DD HH24:MI')||'; ', LAST_CONNECTION_DATE)
+                      'LCD=' || TO_CHAR(LAST_CONNECTION_DATE, 'YYYY.MM.DD HH24:MI') || '; ', LAST_CONNECTION_DATE)
                                                                                                COMMENT_2
 
         from subs_serv_history T1
@@ -238,15 +238,15 @@ WITH SETTING AS
 
 
 SELECT V_INVOICE
-     , COALESCE(TT.TNAME, X102.TNAME, X104.TNAME, X106.TNAME, X101.TNAME, X105.TNAME, X107.TNAME, X108.TNAME) TNAME
-     , COALESCE(TT.CRE_USER_ID, X102.CRE_USER_ID, X104.CRE_USER_ID, X106.CRE_USER_ID, X105.CRE_USER_ID, X107.CRE_USER_ID,
-                X108.CRE_USER_ID)                                                                             CRE_USER_ID
-     , COALESCE(DD.D_A_T_E, TT.START_DATE, X102.CRE_DATE, X104.CHARGE_DATE, X106.CRE_DATE, X101.CRE_DATE, X105.CRE_DATE,
+     , COALESCE(TT.TNAME, X101.TNAME, X102.TNAME, X104.TNAME, X105.TNAME, X106.TNAME, X107.TNAME, X108.TNAME) TNAME
+     , COALESCE(TT.CRE_USER_ID, X102.CRE_USER_ID, X104.CRE_USER_ID, X106.CRE_USER_ID, X105.CRE_USER_ID,
+                X107.CRE_USER_ID, X108.CRE_USER_ID)                                                           CRE_USER_ID
+     , COALESCE(DD.D_A_T_E, TT.CRE_DATE, X102.CRE_DATE, X104.CRE_DATE, X106.CRE_DATE, X101.CRE_DATE, X105.CRE_DATE,
                 X107.CRE_DATE, X108.CRE_DATE)                                                                 CRE_DATE
-     , COALESCE(X106.ORDER_TIME, X105.START_TIME_INTERVAL, X107.TARGET_DATE, X108.ORDER_TIME, null)           ORDER_TIME
-     , COALESCE(TT.DELIVERED, X102.END_DATE, X104.END_CHRG_INTERVAL, X105.END_TIME_INTERVAL, X108.END_DATE)   END_DATE
+     , COALESCE(X106.ORDER_TIME, X105.ORDER_TIME, X107.ORDER_TIME, X108.ORDER_TIME, null)                     ORDER_TIME
+     , COALESCE(TT.END_DATE, X102.END_DATE, X104.END_DATE, X105.END_DATE, X108.END_DATE)                      END_DATE
      , COALESCE(X102.SUMM_$, X101.SUMM_$)                                                                     PAY_$
-     , DECODE(X104.CHARGE_VALUE,0,null,X104.CHARGE_VALUE)                                                     CHARGE_$
+     , DECODE(X104.CHARGE_VALUE, 0, null, X104.CHARGE_VALUE)                                                  CHARGE_$
      , REGEXP_REPLACE(
         REGEXP_REPLACE(
                 coalesce(
@@ -255,22 +255,24 @@ SELECT V_INVOICE
                         REGEXP_SUBSTR(tt.COMMENT_2, (select REGEXP_03 from SETTING)))
             , ':|\s|\.$|[[:alpha:]]', '')
     , ',', '.')                                                                                               BALANCE_$
-     , COALESCE(TT.TRPL_SERV, X104.TRPL_SERV, X105.TRPL_SERV, X106.SERV_NAME, X107.TRPL_SERV, X108.TRPL_SERV) TRPL_SERV
-     , COALESCE(TT.COMMENT_1, X102.COMMENT_1, X104.COMMENT_1, X101.COMMENT_1, X105.COMMENT_1, X107.COMMENT_1,
-                X108.COMMENT_1)                                                                               COMMENTS_1
+     , COALESCE(TT.TRPL_SERV, X104.TRPL_SERV, X105.TRPL_SERV, X106.TRPL_SERV, X107.TRPL_SERV, X108.TRPL_SERV) TRPL_SERV
+     , COALESCE(TT.COMMENT_1, X102.COMMENT_1, X104.COMMENT_1, X101.COMMENT_1,
+                X105.COMMENT_1, X107.COMMENT_1, X108.COMMENT_1)                                               COMMENTS_1
      , COALESCE(TT.COMMENT_2, X104.COMMENT_2, X101.COMMENT_2, X105.COMMENT_2, X107.COMMENT_2, X108.COMMENT_2) COMMENTS_2
 
 FROM TT
          FULL OUTER JOIN DD ON TT.TNAME = DD.TNAME
+         FULL OUTER JOIN X101 ON TT.TNAME = X101.TNAME
          FULL OUTER JOIN X102 ON TT.TNAME = X102.TNAME
          FULL OUTER JOIN X104 ON TT.TNAME = X104.TNAME
-         FULL OUTER JOIN X106 ON TT.TNAME = X106.TNAME
-         FULL OUTER JOIN X101 ON TT.TNAME = X101.TNAME
          FULL OUTER JOIN X105 ON TT.TNAME = X105.TNAME
+         FULL OUTER JOIN X106 ON TT.TNAME = X106.TNAME
          FULL OUTER JOIN X107 ON TT.TNAME = X107.TNAME
          FULL OUTER JOIN X108 ON TT.TNAME = X108.TNAME
 
-
-ORDER BY COALESCE(DD.D_A_T_E, X105.CRE_DATE, X101.CRE_DATE, X102.CRE_DATE, X104.CHARGE_DATE, TT.START_DATE, X106.CRE_DATE,
-                  X107.CRE_DATE, X108.CRE_DATE), TNAME, COALESCE(X102.SUMM_$, X104.CHARGE_VALUE) desc
+ORDER BY
+         COALESCE(DD.D_A_T_E, TT.CRE_DATE, X101.CRE_DATE, X102.CRE_DATE, X104.CRE_DATE
+                  , X105.CRE_DATE, X106.CRE_DATE, X107.CRE_DATE, X108.CRE_DATE)
+       , TNAME
+       , COALESCE(X102.SUMM_$, X104.CHARGE_VALUE) desc
 ;
