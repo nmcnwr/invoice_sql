@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>bERcUT.iT</title>
+    <link rel="icon" type="image/png" href="/static/favicon.ico"/>
+
+    <!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+                integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+                <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    -->
+
+    <link rel="stylesheet" href="/static/semantic.min.css">
+    <script src="/static/jquery-3.1.1.min.js"
+            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="/static/semantic.min.js"></script>
+
+</head>
+<body>
+
+
+<!-- Following Menu -->
+<div class="ui inverted vertical masthead center aligned segment">
+
+    <div class="ui container">
+        <div class="ui large secondary inverted pointing menu">
+            <a href="/" class="active item">Home</a>
+            <a class="item">Work</a>
+            <a class="item">Company</a>
+            <!-- <div class="right item">
+               <a class="ui inverted button">Log in</a>
+               <a class="ui inverted button">Sign Up</a>
+             </div> -->
+            <div class="right item">
+                <h2 class="ui inverted header">SQL analyst. bERcUT.iT</h2>
+                </div>
+
+        </div>
+    </div>
+<!--    <div class="ui grid">-->
+    <!--    <div class="row">-->
+    <!--    <div class="ui text container">-->
+    <!--        <h2 class="ui inverted header">bERcUT.iT SQL анализатор</h2>-->
+
+    <!--    </div>-->
+    <!--    </div>-->
+    <!--    </div>-->
+</div>
+
+<div>
+
+    {% block content1 %}
+    {% endblock %}
+</div>
+
+
+<!-- Following Menu -->
+<div class="ui inverted vertical footer segment">
+    <div class="ui container">
+        <div class="ui stackable inverted divided equal height stackable grid">
+            <div class="three wide column">
+                <h4 class="ui inverted header">About</h4>
+                <div class="ui inverted link list">
+
+                    <a href="https://www.office.bercut.ru/webapp/insite?action=Home" class="item">office.bercut.ru</a>
+
+
+                </div>
+            </div>
+            <div class="three wide column">
+                <h4 class="ui inverted header">Services</h4>
+                <div class="ui inverted link list">
+                    <a href="https://jira.bercut.com/secure/Dashboard.jspa" class="item">Jira твоё</a>
+                    <a href="https://jira.bercut.com/browse/WS-240101?jql=status%20not%20in%20(Closed%2C%20Resolved)%20AND%20assignee%20%3D%202lpTele2BSS%20ORDER%20BY%20status%20ASC%2C%20key%20DESC"
+                       class="item">Jira возьми новое</a>
+                    <a href="https://docs.google.com/spreadsheets/d/1Ho4Q1L0d_TzjmkY1oU7m0uTUop0_dMZ1HJMSYGp9LP0/edit#gid=0"
+                       class="item">Планирование работы по заявкам</a>
+
+                </div>
+            </div>
+            <div class="seven wide column">
+                <h4 class="ui inverted header">Миссия</h4>
+                <p>Здесь всё удобно.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

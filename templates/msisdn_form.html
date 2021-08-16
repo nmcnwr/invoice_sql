@@ -1,0 +1,27 @@
+
+
+
+    {% extends "layout.html" %}
+
+    {% block content1 %}
+
+<form action="/msisdn_print" method="get">
+  <div>
+    <!-- <label for="say">Enter msisdn: </label>
+    <input name="msisdn" id="msisdn" value="79045094244"> -->
+      <div class="three fields">
+        <div class="ui input">
+            <input name="msisdn" id="msisdn" type="text" placeholder="Введите msisdn...">
+            <select class="ui fluid search dropdown" name="db">
+                <option value="">DB</option>
+                <option value="i459s5">i459s5</option>
+                <option value="i460s1">i460s1</option>
+                <option value="i460s10">i460s10</option>
+            </select>
+            <button class="ui button" >Поиск</button>
+        </div>
+      </div>
+  </div>
+</form>
+
+     {% endblock %}

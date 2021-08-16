@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block content1 %}
+<font size="2" face="Times New Roman">
+    <form action="/msisdn_print" method="get">
+        <div>
+            <!-- <label for="say">Enter msisdn: </label>
+            <input name="msisdn" id="msisdn" value="79045094244"> -->
+            <div class="three fields">
+                <div class="ui input">
+
+                    <input name="msisdn" id="msisdn" type="text" placeholder="msisdn...">
+                    <select class="ui fluid search dropdown" name="db">
+                        <option value="">DB</option>
+                        <option value="i459s5">i459s5</option>
+                        <option value="i460s1">i460s1</option>
+                        <option value="i460s10">i460s10</option>
+                    </select>
+                    <button class="ui button">Поиск</button>
+
+                </div>
+            </div>
+        </div>
+    </form>
+</font>
+Entered msisdn {{ msisdn }}; db = {{ db }}
+
+<div style="width:100%;height:850px;overflow-x: scroll;word-wrap:break-word;">
+
+    <font size="2" face="Times New Roman">
+        <table class="ui grey selectable celled table">
+            <thead class="full-width">
+            <tr>
+                {% for header in headings %}
+                <th>{{ header }}</th>
+                {% endfor %}
+
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in data %}
+
+            <tr>
+                {% for cell in row %}
+                <td>{{ cell|safe }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </font>
+</div>
+
+
+{% endblock %}
